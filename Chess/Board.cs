@@ -26,10 +26,6 @@ namespace Chess
             InitFigures(parts[0]);
             moveColor = parts[1] == "b" ? Color.black : Color.white;
             moveNumber = int.Parse(parts[5]);
-
-            SetFigureAt(new Square("a1"), Figure.whiteKnight);
-            SetFigureAt(new Square("h8"), Figure.blackKing);
-            moveColor = Color.white;
         }
 
         void InitFigures(string data)
@@ -49,6 +45,13 @@ namespace Chess
                 return figures[square.x, square.y];
             else
                 return Figure.none;
+        }
+
+        public IEnumerable<FigureOnSquare> YieldFigures()
+        {
+            foreach (Square square in Square.YieldSquares())
+                if (GetFigureAt(square).GetColor() == moveColor)
+                    yield return new FigureOnSquare(GetFigureAt(square), square);
         }
 
         private void SetFigureAt(Square square, Figure figure)
@@ -84,6 +87,41 @@ namespace Chess
                 FenFigures.Replace(eight.Substring(0, j), j.ToString());
 
             fen = FenFigures + " " + (moveColor == Color.white ? "w" : "b") + " - - 0 " + moveNumber.ToString();
+        }
+
+        private bool CanEatKing()
+        {
+            Square BadKing = FindBadKing();
+            Moves moves = new Moves(this);
+            foreach (FigureOnSquare fs in YieldFigures())
+            {
+                FigureMoving fm = new FigureMoving(fs, BadKing);
+                if (moves.CanMove(fm))
+                    return true;
+            }
+            return false;
+        }
+
+        private Square FindBadKing()
+        {
+            Figure BadKing = moveColor == Color.black ? Figure.whiteKing : Figure.blackKing;
+            foreach (Square square in Square.YieldSquares())
+                if (GetFigureAt(square) == BadKing)
+                    return square;
+            return Square.none;
+        }
+
+        public bool IsCheck()
+        {
+            Board after = new Board(fen);
+            after.moveColor = moveColor.SwitchColor();
+            return after.CanEatKing();
+        }
+
+        public bool IsCheckAfterMove(FigureMoving fm)
+        {
+            Board after = Move(fm);
+            return after.CanEatKing(); 
         }
     }
 }
