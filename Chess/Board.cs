@@ -17,9 +17,10 @@ namespace Chess
         {
             this.fen = fen;
             figures = new Figure[8, 8];
+            BoardInit();
         }
 
-        private void Init()
+        private void BoardInit()
         {
             string[] parts = fen.Split();
             if (parts.Length != 6) return;

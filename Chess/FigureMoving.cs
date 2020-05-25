@@ -29,7 +29,7 @@ namespace Chess
             this.promotion = (move.Length == 6) ? (Figure)move[5] : Figure.none;
         }
 
-        public int DeltaX { get { return to.y - from.y; } }
+        public int DeltaX { get { return to.x - from.x; } }
         public int DeltaY { get { return to.y - from.y; } }
 
         public int AbsDeltaX { get { return Math.Abs(DeltaX); } }
