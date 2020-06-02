@@ -36,6 +36,8 @@
             this.joinAGameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.labelInfo = new System.Windows.Forms.Label();
+            this.asWhiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.asBlackToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -56,7 +58,7 @@
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(476, 28);
+            this.menuStrip1.Size = new System.Drawing.Size(476, 30);
             this.menuStrip1.TabIndex = 3;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -73,25 +75,30 @@
             // connectToolStripMenuItem
             // 
             this.connectToolStripMenuItem.Name = "connectToolStripMenuItem";
-            this.connectToolStripMenuItem.Size = new System.Drawing.Size(178, 26);
+            this.connectToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
             this.connectToolStripMenuItem.Text = "Connect..";
+            this.connectToolStripMenuItem.Click += new System.EventHandler(this.connectToolStripMenuItem_Click);
             // 
             // newGameToolStripMenuItem
             // 
+            this.newGameToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.asWhiteToolStripMenuItem,
+            this.asBlackToolStripMenuItem});
             this.newGameToolStripMenuItem.Name = "newGameToolStripMenuItem";
-            this.newGameToolStripMenuItem.Size = new System.Drawing.Size(178, 26);
+            this.newGameToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
             this.newGameToolStripMenuItem.Text = "New game..";
             // 
             // joinAGameToolStripMenuItem
             // 
             this.joinAGameToolStripMenuItem.Name = "joinAGameToolStripMenuItem";
-            this.joinAGameToolStripMenuItem.Size = new System.Drawing.Size(178, 26);
+            this.joinAGameToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
             this.joinAGameToolStripMenuItem.Text = "Join a game..";
+            this.joinAGameToolStripMenuItem.Click += new System.EventHandler(this.joinAGameToolStripMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(55, 26);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(55, 24);
             this.helpToolStripMenuItem.Text = "Help";
             // 
             // labelInfo
@@ -102,6 +109,20 @@
             this.labelInfo.Size = new System.Drawing.Size(93, 17);
             this.labelInfo.TabIndex = 4;
             this.labelInfo.Text = "server - none";
+            // 
+            // asWhiteToolStripMenuItem
+            // 
+            this.asWhiteToolStripMenuItem.Name = "asWhiteToolStripMenuItem";
+            this.asWhiteToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.asWhiteToolStripMenuItem.Text = "as white";
+            this.asWhiteToolStripMenuItem.Click += new System.EventHandler(this.asWhiteToolStripMenuItem_Click);
+            // 
+            // asBlackToolStripMenuItem
+            // 
+            this.asBlackToolStripMenuItem.Name = "asBlackToolStripMenuItem";
+            this.asBlackToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.asBlackToolStripMenuItem.Text = "as black";
+            this.asBlackToolStripMenuItem.Click += new System.EventHandler(this.asBlackToolStripMenuItem_Click);
             // 
             // frmMain
             // 
@@ -132,6 +153,8 @@
         private System.Windows.Forms.ToolStripMenuItem joinAGameToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
         private System.Windows.Forms.Label labelInfo;
+        private System.Windows.Forms.ToolStripMenuItem asWhiteToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem asBlackToolStripMenuItem;
     }
 }
 

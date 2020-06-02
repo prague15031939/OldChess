@@ -1,18 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
+using System.Threading;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using Chess;
+using System.Net;
+using System.Net.Sockets;
 
 namespace OldChess
 {
+    public enum ClientState
+    {
+        initial, connect, create, join, accept, play
+    }
+
     public partial class frmMain : Form
     {
+        public string UserName { get; set; }
+        public string ServerInfo { get; set; }
+        public int JoinedGameID { get; set; }
+
+        private TcpClient client; 
+
+        private ClientState state;
+        private bool active;
+
         private readonly int CellSize = 50;
         private Panel[,] GameMap;
         private Chess.Chess chess;
@@ -22,10 +34,21 @@ namespace OldChess
         public frmMain()
         {
             InitializeComponent();
+            state = ClientState.initial;
+            JoinedGameID = -1;
+        }
+
+        private void StartGame(string side)
+        {
             InitGameMap();
             wait = true;
-            chess = new Chess.Chess();// "rnb1kb1r/p3p1p1/B4n2/p1qP2pp/1P1Ppp2/4Q1PN/PP3PRP/RNB1K3 w Qkq - 0 1");
+            state = ClientState.play;
+            active = side == "white" ? true : false;
+            chess = new Chess.Chess();
             ShowPosition();
+
+            Thread ServerThread = new Thread(new ThreadStart(ProcessServer));
+            ServerThread.Start();
         }
 
         private void InitGameMap()
@@ -65,26 +88,31 @@ namespace OldChess
 
         private void panel_MouseClick(object sender, MouseEventArgs e)
         {
-            string xy = ((Panel)sender).Name.Substring(1);
-            int x = xy[0] - '0';
-            int y = xy[1] - '0';
+            if (active)
+            {
+                string xy = ((Panel)sender).Name.Substring(1);
+                int x = xy[0] - '0';
+                int y = xy[1] - '0';
 
-            if (wait)
-            {
-                wait = false;
-                xFrom = x;
-                yFrom = y;
+                if (wait)
+                {
+                    wait = false;
+                    xFrom = x;
+                    yFrom = y;
+                }
+                else
+                {
+                    wait = true;
+                    string figure = chess.GetFigureAt(xFrom, yFrom).ToString();
+                    string move = figure +
+                        ((char)('a' + xFrom)).ToString() + ((char)('1' + yFrom)).ToString() +
+                        ((char)('a' + x)).ToString() + ((char)('1' + y)).ToString();
+                    chess = chess.Move(move);
+                    SendMessage($"MOVE:{UserName}:{chess.fen}");
+                    active = false;
+                }
+                ShowPosition();
             }
-            else
-            {
-                wait = true;
-                string figure = chess.GetFigureAt(xFrom, yFrom).ToString();
-                string move = figure +
-                    ((char)('a' + xFrom)).ToString() + ((char)('1' + yFrom)).ToString() +
-                    ((char)('a' + x)).ToString() + ((char)('1' + y)).ToString();
-                chess = chess.Move(move);
-            }
-            ShowPosition();
         }
 
         private void MarkSquaresFrom()
@@ -128,7 +156,8 @@ namespace OldChess
             for (int i = 0; i < 8; i++)
                 for (int j = 0; j < 8; j++)
                     ShowFigure(i, j, chess.GetFigureAt(i, j));
-            MarkSquares();
+            if (active)
+                MarkSquares();
         }
 
         public void ShowFigure(int x, int y, char figure)
@@ -153,6 +182,132 @@ namespace OldChess
                 default: FigureImage = null; break;
             }
             GameMap[x, y].BackgroundImage = FigureImage;
+        }
+
+        private void connectToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var frm = new frmConnect();
+            frm.Owner = this;
+            frm.ShowDialog();
+
+            try
+            {
+                ConnectToServer();
+                state = ClientState.connect;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string GetServerResponse()
+        {
+            NetworkStream stream = client.GetStream();
+            var data = new byte[256];
+            string dataStr = "";
+            int bytes = 0;
+            do
+            {
+                bytes = stream.Read(data, 0, data.Length);
+                dataStr += Encoding.Unicode.GetString(data, 0, bytes);
+            }
+            while (stream.DataAvailable);
+            return dataStr;
+        }
+
+        private void SendMessage(string msg)
+        {
+            NetworkStream stream = client.GetStream();
+            byte[] data = Encoding.Unicode.GetBytes(msg);
+            stream.Write(data, 0, data.Length);
+        }
+
+        private void asWhiteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SendMessage($"NEWGAME {UserName} white");
+            WaitForGame();
+        }
+
+        private void asBlackToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SendMessage($"NEWGAME {UserName} black");
+            WaitForGame();
+        }
+
+        private void WaitForGame()
+        {
+            while (true)
+            {
+                string msg = GetServerResponse();
+                if (msg.Split(' ')[0] == "GAMEREADY")
+                {
+                    string enemy = msg.Split(' ')[1];
+                    string side = msg.Split(' ')[2];
+                    if (MessageBox.Show($"playing vs: {enemy} as {side}", "game is ready", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) == DialogResult.OK)
+                        SendMessage($"ACCEPT {UserName}");
+                    else
+                        SendMessage($"REJECT {UserName}");
+                    msg = GetServerResponse();
+                    if (msg == "DESTROY")
+                    {
+                        state = ClientState.connect;
+                        MessageBox.Show($"game was rejected", "error", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else if (msg.StartsWith("GAMESTART"))
+                        StartGame(msg.Split(' ')[1]);
+
+                    return;
+                }
+            }
+        }
+
+        private void joinAGameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SendMessage($"GETAVAIL {UserName}");
+            string msg = GetServerResponse();
+            if (msg == "none")
+            {
+                MessageBox.Show("no games available", "warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            var frm = new frmJoin(msg);
+            frm.Owner = this;
+            frm.ShowDialog();
+            if (JoinedGameID != -1)
+            {
+                SendMessage($"JOIN {UserName} {JoinedGameID}");
+                WaitForGame();
+            }
+        }
+
+        private void ConnectToServer()
+        {
+            if (state == ClientState.initial)
+            {
+                client = new TcpClient();
+                IPAddress ip = IPAddress.Parse(ServerInfo.Split(':')[0]);
+                IPEndPoint server = new IPEndPoint(ip, Convert.ToInt32(ServerInfo.Split(':')[1]));
+                client.Connect(server);
+
+                SendMessage($"CONNECT {UserName}");
+            }
+        }
+
+        private void ProcessServer()
+        {
+            while (true)
+            {
+                string msg = GetServerResponse();
+                string request = msg.Split(':')[0];
+                if (request == "MOVE")
+                {
+                    string fen = msg.Split(':')[2];
+                    chess = new Chess.Chess(fen);
+                    active = true;
+                    ShowPosition();
+                }
+            }
         }
 
     }
