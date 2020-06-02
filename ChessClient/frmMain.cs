@@ -107,9 +107,12 @@ namespace OldChess
                     string move = figure +
                         ((char)('a' + xFrom)).ToString() + ((char)('1' + yFrom)).ToString() +
                         ((char)('a' + x)).ToString() + ((char)('1' + y)).ToString();
-                    chess = chess.Move(move);
-                    SendMessage($"MOVE:{UserName}:{chess.fen}");
-                    active = false;
+                    if (!chess.Equals(chess.Move(move)))
+                    {
+                        chess = chess.Move(move);
+                        SendMessage($"MOVE:{UserName}:{chess.fen}");
+                        active = false;
+                    }
                 }
                 ShowPosition();
             }
@@ -145,9 +148,9 @@ namespace OldChess
             for (int i = 0; i < 8; i++)
                 for (int j = 0; j < 8; j++)
                     GameMap[i, j].BackColor = GetColor(i, j);
-            if (wait) 
+            if (wait && active) 
                 MarkSquaresFrom(); 
-            else 
+            else if (active) 
                 MarkSquaresTo();
         }
 
@@ -156,8 +159,7 @@ namespace OldChess
             for (int i = 0; i < 8; i++)
                 for (int j = 0; j < 8; j++)
                     ShowFigure(i, j, chess.GetFigureAt(i, j));
-            if (active)
-                MarkSquares();
+            MarkSquares();
         }
 
         public void ShowFigure(int x, int y, char figure)
