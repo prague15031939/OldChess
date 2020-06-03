@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Net;
@@ -85,8 +84,26 @@ namespace ChessServer
 
                     if (request == "CONNECT")
                     {
+                        if (!UsernameIsUnique(UserName))
+                        {
+                            SendMessage(client, $"{UserName} already exists on the server");
+                            return;
+                        }
+                        else
+                            SendMessage(client, "OK");
                         UserList.Add(new User(client, UserName));
+                        GetUser(UserName).SessionID = -1;
                         Console.WriteLine($"{UserName} connected");
+                    }
+                    else if (request == "DISCONNECT")
+                    {
+                        User user = GetUser(UserName);
+                        if (user.SessionID != -1)
+                            DestroySession(user.SessionID);
+                        StopCreatedSessions(user);
+                        Console.WriteLine($"{UserName} has been disconnected");
+                        UserList.Remove(user);
+                        return;
                     }
                     else if (request == "NEWGAME")
                     {
@@ -105,33 +122,41 @@ namespace ChessServer
                     else if (request == "JOIN")
                     {
                         int SessionID = Convert.ToInt32(msg.Split(' ')[2]);
-                        string side = SessionList[SessionID].GetInactiveSide();
 
-                        User JoinerUser = GetUser(UserName);
-                        JoinerUser.side = side;
+                        if (SessionList[SessionID].status != GameStatus.destroyed)
+                        {
+                            string side = SessionList[SessionID].GetInactiveSide();
+                            User JoinerUser = GetUser(UserName);
+                            JoinerUser.side = side;
 
-                        SessionList[SessionID].SetSecondPlayer(JoinerUser);
-                        Console.WriteLine($"{UserName} joins game session #{SessionID} as {side}");
+                            SessionList[SessionID].SetSecondPlayer(JoinerUser);
+                            Console.WriteLine($"{UserName} joins game session #{SessionID} as {side}");
 
-                        SendAcceptions(SessionID);
+                            SendAcceptions(SessionID);
+                        }
+                        else
+                            SendMessage(client, "DESTROY");
                     }
                     else if (request == "ACCEPT")
                     {
                         User user = GetUser(UserName);
-                        Console.WriteLine($"{UserName} accepted game session #{user.SessionID}");
-                        if (SessionList[user.SessionID].status == GameStatus.wait)
-                            SessionList[user.SessionID].status = GameStatus.AcceptOne;
-                        else if (SessionList[user.SessionID].status == GameStatus.AcceptOne)
+                        if (user.SessionID != -1)
                         {
-                            SessionList[user.SessionID].status = GameStatus.inProgress;
-                            StartGame(user.SessionID);
+                            Console.WriteLine($"{UserName} accepted game session #{user.SessionID}");
+                            if (SessionList[user.SessionID].status == GameStatus.wait)
+                                SessionList[user.SessionID].status = GameStatus.AcceptOne;
+                            else if (SessionList[user.SessionID].status == GameStatus.AcceptOne)
+                            {
+                                SessionList[user.SessionID].status = GameStatus.inProgress;
+                                StartGame(user.SessionID);
+                            }
                         }
                     }
                     else if (request == "REJECT")
                     {
                         User user = GetUser(UserName);
                         Console.WriteLine($"{UserName} rejected game session #{user.SessionID}");
-                        DestroySession(user);
+                        DestroySession(user.SessionID);
                     }
                     else if (msg.Split(':')[0] == "MOVE")
                     {
@@ -139,6 +164,20 @@ namespace ChessServer
                         User user = GetUser(UserName);
                         User userOp = SessionList[user.SessionID].GetOpponent(user);
                         SendMessage(userOp.client, msg);
+                        Console.WriteLine($"{user.name} moves with {msg.Split(':')[2]}");
+                    }
+                    else if (request == "QUITGAME")
+                    {
+                        User user = GetUser(UserName);
+                        Console.WriteLine($"{UserName} quit game session #{user.SessionID}");
+                        DestroySession(user.SessionID);
+                    }
+                    else if (request == "CANCELNEW")
+                    {
+                        User user = GetUser(UserName);
+                        int SessionID = GetCreatedSessionID(user);
+                        Console.WriteLine($"{UserName} canceled game session #{SessionID}");
+                        DestroySession(SessionID);
                     }
 
                 }
@@ -150,24 +189,56 @@ namespace ChessServer
         {
             User player1 = SessionList[SessionID].PlayerBlack;
             User player2 = SessionList[SessionID].PlayerWhite;
-            SendMessage(player1.client, $"GAMESTART {player1.side}");
-            SendMessage(player2.client, $"GAMESTART {player2.side}");
+            SendMessage(player1.client, $"GAMESTART {player1.side} {SessionID}");
+            SendMessage(player2.client, $"GAMESTART {player2.side} {SessionID}");
+            Console.WriteLine($"game session #{SessionID} has been started");
         }
 
-        private void DestroySession(User user)
+        private void StopCreatedSessions(User user)
         {
-            if (SessionList[user.SessionID].status != GameStatus.destroyed)
+            int i = 0;
+            foreach (GameSession game in SessionList)
             {
-                User player1 = SessionList[user.SessionID].PlayerBlack;
-                User player2 = SessionList[user.SessionID].PlayerWhite;
-                SessionList[user.SessionID].status = GameStatus.destroyed;
-                Console.WriteLine($"game session #{user.SessionID} has been destroyed");
-                player1.SessionID = -1;
-                player2.SessionID = -1;
-                player1.side = "";
-                player2.side = "";
-                SendMessage(player1.client, $"DESTROY");
-                SendMessage(player2.client, $"DESTROY");
+                if ((game.PlayerBlack != null && game.PlayerBlack.name == user.name) || (game.PlayerWhite != null && game.PlayerWhite.name == user.name))
+                    if (game.status == GameStatus.wait || game.status == GameStatus.AcceptOne)
+                        DestroySession(i);
+                i++;
+            }
+        }
+
+        private int GetCreatedSessionID(User user)
+        {
+            int i = 0;
+            foreach (GameSession game in SessionList)
+            {
+                if ((game.PlayerBlack != null && game.PlayerBlack.name == user.name) || (game.PlayerWhite != null && game.PlayerWhite.name == user.name))
+                    if (game.status == GameStatus.wait)
+                        return i;
+                i++;
+            }
+            return -1;
+        }
+
+        private void DestroySession(int SessionID)
+        {
+            if (SessionList[SessionID].status != GameStatus.destroyed)
+            {
+                User player1 = SessionList[SessionID].PlayerBlack;
+                User player2 = SessionList[SessionID].PlayerWhite;
+                SessionList[SessionID].status = GameStatus.destroyed;
+                Console.WriteLine($"game session #{SessionID} has been destroyed");
+                if (player1 != null)
+                {
+                    player1.SessionID = -1;
+                    player1.side = null;
+                    SendMessage(player1.client, $"DESTROY");
+                }
+                if (player2 != null)
+                {
+                    player2.SessionID = -1;
+                    player2.side = null;
+                    SendMessage(player2.client, $"DESTROY");
+                }
             }
         }
 
@@ -184,10 +255,20 @@ namespace ChessServer
         {
             foreach (User user in UserList)
             {
-                if (user.name == UserName)
+                if (user != null && user.name == UserName)
                     return user;
             }
             return null;
+        }
+
+        private bool UsernameIsUnique(string name)
+        {
+            foreach (User user in UserList)
+            {
+                if (user != null && user.name == name)
+                    return false;
+            }
+            return true;
         }
 
         private string GetAvailableGames(string finder)

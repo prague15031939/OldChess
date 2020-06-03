@@ -16,7 +16,6 @@ namespace ChessServer
         public User PlayerWhite { get; set; }
         public User PlayerBlack { get; set; }
         public GameStatus status { get; set; }
-        public string CurrentFen { get; set; }
 
         public GameSession(User player, string side)
         {
