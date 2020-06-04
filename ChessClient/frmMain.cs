@@ -122,7 +122,12 @@ namespace OldChess
                     if (!chess.Equals(chess.Move(move)))
                     {
                         chess = chess.Move(move);
-                        SendMessage($"MOVE:{UserName}:{chess.fen}");
+                        if (chess.isCheckmate())
+                            SendMessage($"MOVEWIN {UserName} {move}");
+                        else if (chess.isStalemate())
+                            SendMessage($"MOVEDRAW {UserName} {move}");
+                        else
+                            SendMessage($"MOVE {UserName} {move}");
                         active = false;
                     }
                 }
@@ -298,9 +303,9 @@ namespace OldChess
                 {
                     ConnectToServer();
                 }
-                catch
+                catch (Exception ex)
                 {
-                    MessageBox.Show($"unable to connect to a server", "error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(ex.Message, "error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -417,10 +422,10 @@ namespace OldChess
         {
             if (state == ClientState.initial)
             {
-                client = new TcpClient();
-                IPAddress ip = IPAddress.Parse(ServerInfo.Split(':')[0]);
-                IPEndPoint server = new IPEndPoint(ip, Convert.ToInt32(ServerInfo.Split(':')[1]));
-                client.Connect(server);
+                client = new TcpClient(ServerInfo.Split(':')[0], Convert.ToInt32(ServerInfo.Split(':')[1]));
+                //IPAddress ip = IPAddress.Parse(ServerInfo.Split(':')[0]);
+                //IPEndPoint server = new IPEndPoint(ip, Convert.ToInt32(ServerInfo.Split(':')[1]));
+                //client.Connect(server);
 
                 SendMessage($"CONNECT {UserName}");
                 string msg = GetServerResponse();
@@ -462,13 +467,47 @@ namespace OldChess
                     ProcessDestroyCommand($"game was rejected");
                     return;
                 }
-                string request = msg.Split(':')[0];
-                if (request == "MOVE")
+                else if (msg == "DRAW")
                 {
-                    string fen = msg.Split(':')[2];
-                    chess = new Chess.Chess(fen);
+                    JoinedGameID = -1;
+                    state = ClientState.connect;
+                    if (MessageBox.Show("game has been ended with draw", "info", MessageBoxButtons.OK, MessageBoxIcon.Information) == DialogResult.OK)
+                        menuStrip1.Invoke(new Action(() => RefreshServerControlTools()));
+                    return;
+                }
+                else if (msg == "WIN")
+                {
+                    JoinedGameID = -1;
+                    state = ClientState.connect;
+                    if (MessageBox.Show($"you have defeated {OpponentName}", "info", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information) == DialogResult.OK)
+                        menuStrip1.Invoke(new Action(() => RefreshServerControlTools()));
+                    return;
+                }
+
+                string request = msg.Split(' ')[0];
+                if (request == "MOVE" || request == "DEFEATED" || request == "DRAW")
+                {
+                    string move = msg.Split(' ')[2];
+                    chess = chess.Move(move);
                     active = true;
                     ShowPosition();
+                }
+                if (request == "DEFEATED")
+                {
+                    JoinedGameID = -1;
+                    state = ClientState.connect;
+                    if (MessageBox.Show($"{OpponentName} has won", "info", MessageBoxButtons.OK, MessageBoxIcon.Information) == DialogResult.OK)
+                        menuStrip1.Invoke(new Action(() => RefreshServerControlTools()));
+                    return;
+                }
+                if (request == "DRAW")
+                {
+                    JoinedGameID = -1;
+                    state = ClientState.connect;
+                    if (MessageBox.Show("game has been ended with draw", "info", MessageBoxButtons.OK, MessageBoxIcon.Information) == DialogResult.OK)
+                        menuStrip1.Invoke(new Action(() => RefreshServerControlTools()));
+                    return;
                 }
             }
         }

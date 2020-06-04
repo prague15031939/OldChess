@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+using System.Threading;
 
 
 namespace ChessServer
@@ -11,31 +11,61 @@ namespace ChessServer
     {
         public static ChessServer server;
 
-        public static string GetLocalIPAddress()
+        private static void ProcessControlCommands(ChessServer server)
         {
-            return "127.0.0.1";
-            /*var host = Dns.GetHostEntry(Dns.GetHostName());
-            foreach (var ip in host.AddressList)
+            while (true)
             {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                string command = Console.ReadLine();
+                if (command == "!stop")
                 {
-                    return ip.ToString();
+                    try
+                    {
+                        server.StopWork();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                        continue;
+                    }
+                    Console.WriteLine("server shutdowned, press any key..");
+                    Console.ReadKey();
+                    return;
+                }
+                else if (command == "!users")
+                {
+                    server.PrintUsers();
+                }
+                else if (command == "!sessions")
+                {
+                    server.PrintSessions();
                 }
             }
-            throw new Exception("No network adapters with an IPv4 address in the system!");*/
         }
 
         static void Main(string[] args)
         {
-            Console.Write("OldChess server, v. 1.01\ninitial config..\nport: ");
-            int port = Convert.ToInt32(Console.ReadLine());
-            string ip = GetLocalIPAddress();
-            server = new ChessServer(ip, port);
+            Console.Write("OldChess server, v. 1.01\ninitial config..\n");
+            while (true)
+            {
+                string PatternServer = @"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b:[0-9]{1,5}$";
+                Console.Write("ip: ");
+                string ip = Console.ReadLine();
+                Console.Write("port: ");
+                int port = Convert.ToInt32(Console.ReadLine());
+                if (Regex.IsMatch($"{ip}:{port}", PatternServer))
+                {
+                    server = new ChessServer(ip, port);
+                    break;
+                }
+                else
+                    Console.WriteLine("invalid data, try again");
+            }
             server.StartWork();
             Console.Write("server started\n");
+            Thread ServerThread = new Thread(new ThreadStart(() => ProcessControlCommands(server)));
+            ServerThread.Start();
+
             server.MainLoop();
-            Console.Write("server shutdown, press any key..\n");
-            Console.ReadKey();
         }
 
     }

@@ -28,6 +28,42 @@ namespace ChessServer
             listener.Start();
         }
 
+        public void StopWork()
+        {
+            if (UserList.Count == 0)
+                listener.Stop();
+            else
+                throw new Exception(":: server can not be stopped");
+        }
+
+        public void PrintUsers()
+        {
+            if (UserList.Count == 0)
+            {
+                Console.WriteLine(":: no users connected");
+                return;
+            }
+            else
+                foreach (User user in UserList)
+                    Console.WriteLine($":: {user.name}" + (user.SessionID == -1 ? "" : $" on session #{user.SessionID} as {user.side}"));
+        }
+
+        public void PrintSessions()
+        {
+            if (SessionList.Count == 0)
+            {
+                Console.WriteLine(":: no sessions created");
+                return;
+            }
+            int i = 0;
+            foreach (GameSession game in SessionList)
+            {
+                Console.WriteLine($":: session #{i} {game.status.ToString()}" + 
+                    (game.status == GameStatus.inProgress ? $": {game.PlayerWhite.name} vs {game.PlayerBlack.name}" : ""));
+                i++;
+            }
+        }
+
         public void MainLoop()
         {
             try
@@ -40,9 +76,9 @@ namespace ChessServer
                     clientThread.Start();
                 }
             }
-            catch (Exception ex)
+            catch //(Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                ;//Console.WriteLine(ex.Message);
             }
             finally
             {
@@ -158,13 +194,32 @@ namespace ChessServer
                         Console.WriteLine($"{UserName} rejected game session #{user.SessionID}");
                         DestroySession(user.SessionID);
                     }
-                    else if (msg.Split(':')[0] == "MOVE")
+                    else if (request == "MOVE")
                     {
-                        UserName = msg.Split(':')[1];
                         User user = GetUser(UserName);
                         User userOp = SessionList[user.SessionID].GetOpponent(user);
                         SendMessage(userOp.client, msg);
-                        Console.WriteLine($"{user.name} moves with {msg.Split(':')[2]}");
+                        Console.WriteLine($"{user.name} moves with {msg.Split(' ')[2]}");
+                    }
+                    else if (request == "MOVEWIN")
+                    {
+                        User user = GetUser(UserName);
+                        User userOp = SessionList[user.SessionID].GetOpponent(user);
+                        SendMessage(user.client, "WIN");
+                        SendMessage(userOp.client, "DEFEATED" + msg.Substring(7));
+                        Console.WriteLine($"{user.name} moves with {msg.Split(' ')[2]}");
+                        Console.WriteLine($"{user.name} defeated {userOp.name} on session #{user.SessionID}");
+                        DestroySession(user.SessionID, "soft");
+                    }
+                    else if (request == "MOVEDRAW")
+                    {
+                        User user = GetUser(UserName);
+                        User userOp = SessionList[user.SessionID].GetOpponent(user);
+                        SendMessage(user.client, "DRAW");
+                        SendMessage(userOp.client, "DRAW" + msg.Substring(8));
+                        Console.WriteLine($"{user.name} moves with {msg.Split(' ')[2]}");
+                        Console.WriteLine($"draw between {user.name} and {userOp.name} on session #{user.SessionID}");
+                        DestroySession(user.SessionID, "soft");
                     }
                     else if (request == "QUITGAME")
                     {
@@ -219,7 +274,7 @@ namespace ChessServer
             return -1;
         }
 
-        private void DestroySession(int SessionID)
+        private void DestroySession(int SessionID, string type = "hard")
         {
             if (SessionList[SessionID].status != GameStatus.destroyed)
             {
@@ -231,13 +286,15 @@ namespace ChessServer
                 {
                     player1.SessionID = -1;
                     player1.side = null;
-                    SendMessage(player1.client, $"DESTROY");
+                    if (type == "hard")
+                        SendMessage(player1.client, $"DESTROY");
                 }
                 if (player2 != null)
                 {
                     player2.SessionID = -1;
                     player2.side = null;
-                    SendMessage(player2.client, $"DESTROY");
+                    if (type == "hard")
+                        SendMessage(player2.client, $"DESTROY");
                 }
             }
         }

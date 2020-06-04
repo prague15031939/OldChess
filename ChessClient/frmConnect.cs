@@ -21,6 +21,7 @@ namespace OldChess
         private void SetServers()
         {
             comboServers.Items.Add("127.0.0.1:8008");
+            comboServers.Items.Add("192.168.100.126:8008");
         }
 
         private void btnConnect_Click(object sender, EventArgs e)

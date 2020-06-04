@@ -90,7 +90,7 @@ namespace Chess
             fen = FenFigures + " " + (moveColor == Color.white ? "w" : "b") + " - - 0 " + moveNumber.ToString();
         }
 
-        private bool CanEatKing()
+        public bool CanEatKing()
         {
             Square BadKing = FindBadKing();
             Moves moves = new Moves(this);

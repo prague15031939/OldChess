@@ -60,6 +60,24 @@ namespace Chess
             }
         }
 
+        public bool isStalemate()
+        {
+            FindAllMoves();
+            if (allMoves.Count == 0 && !board.IsCheck())
+                return true;
+            else
+                return false;
+        }
+
+        public bool isCheckmate()
+        {
+            FindAllMoves();
+            if (allMoves.Count == 0 && board.IsCheck())
+                return true;
+            else
+                return false;
+        }
+
         public List<string> GetAllMoves()
         {
             FindAllMoves();
