@@ -78,6 +78,15 @@ namespace Chess
                 return false;
         }
 
+        public string isPromotion(string move)
+        {
+            if (move[0] == 'P' && move[4] == '8')
+                return "Q";
+            if (move[0] == 'p' && move[4] == '1')
+                return "q";
+            return "";
+        }
+
         public List<string> GetAllMoves()
         {
             FindAllMoves();

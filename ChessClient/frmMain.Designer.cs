@@ -35,7 +35,9 @@
             this.newGameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.asWhiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.asBlackToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cancelNewGameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.joinAGameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.quitAGameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.disconnectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panel1 = new System.Windows.Forms.Panel();
@@ -44,8 +46,6 @@
             this.labelPlayerBlack = new System.Windows.Forms.Label();
             this.panel3 = new System.Windows.Forms.Panel();
             this.labelPlayerWhite = new System.Windows.Forms.Label();
-            this.quitAGameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.cancelNewGameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -89,7 +89,7 @@
             // connectToolStripMenuItem
             // 
             this.connectToolStripMenuItem.Name = "connectToolStripMenuItem";
-            this.connectToolStripMenuItem.Size = new System.Drawing.Size(178, 26);
+            this.connectToolStripMenuItem.Size = new System.Drawing.Size(209, 26);
             this.connectToolStripMenuItem.Text = "Connect..";
             this.connectToolStripMenuItem.Click += new System.EventHandler(this.connectToolStripMenuItem_Click);
             // 
@@ -99,7 +99,7 @@
             this.asWhiteToolStripMenuItem,
             this.asBlackToolStripMenuItem});
             this.newGameToolStripMenuItem.Name = "newGameToolStripMenuItem";
-            this.newGameToolStripMenuItem.Size = new System.Drawing.Size(178, 26);
+            this.newGameToolStripMenuItem.Size = new System.Drawing.Size(209, 26);
             this.newGameToolStripMenuItem.Text = "New game..";
             // 
             // asWhiteToolStripMenuItem
@@ -116,17 +116,31 @@
             this.asBlackToolStripMenuItem.Text = "as black";
             this.asBlackToolStripMenuItem.Click += new System.EventHandler(this.asBlackToolStripMenuItem_Click);
             // 
+            // cancelNewGameToolStripMenuItem
+            // 
+            this.cancelNewGameToolStripMenuItem.Name = "cancelNewGameToolStripMenuItem";
+            this.cancelNewGameToolStripMenuItem.Size = new System.Drawing.Size(209, 26);
+            this.cancelNewGameToolStripMenuItem.Text = "Cancel new game";
+            this.cancelNewGameToolStripMenuItem.Click += new System.EventHandler(this.cancelNewGameToolStripMenuItem_Click);
+            // 
             // joinAGameToolStripMenuItem
             // 
             this.joinAGameToolStripMenuItem.Name = "joinAGameToolStripMenuItem";
-            this.joinAGameToolStripMenuItem.Size = new System.Drawing.Size(178, 26);
+            this.joinAGameToolStripMenuItem.Size = new System.Drawing.Size(209, 26);
             this.joinAGameToolStripMenuItem.Text = "Join a game..";
             this.joinAGameToolStripMenuItem.Click += new System.EventHandler(this.joinAGameToolStripMenuItem_Click);
+            // 
+            // quitAGameToolStripMenuItem
+            // 
+            this.quitAGameToolStripMenuItem.Name = "quitAGameToolStripMenuItem";
+            this.quitAGameToolStripMenuItem.Size = new System.Drawing.Size(209, 26);
+            this.quitAGameToolStripMenuItem.Text = "Quit a game";
+            this.quitAGameToolStripMenuItem.Click += new System.EventHandler(this.quitAGameToolStripMenuItem_Click);
             // 
             // disconnectToolStripMenuItem
             // 
             this.disconnectToolStripMenuItem.Name = "disconnectToolStripMenuItem";
-            this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
+            this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(209, 26);
             this.disconnectToolStripMenuItem.Text = "Disconnect";
             this.disconnectToolStripMenuItem.Click += new System.EventHandler(this.disconnectToolStripMenuItem_Click);
             // 
@@ -178,7 +192,7 @@
             // 
             this.panel3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel3.Controls.Add(this.labelPlayerWhite);
-            this.panel3.Location = new System.Drawing.Point(37, 532);
+            this.panel3.Location = new System.Drawing.Point(37, 560);
             this.panel3.Name = "panel3";
             this.panel3.Size = new System.Drawing.Size(402, 33);
             this.panel3.TabIndex = 7;
@@ -193,24 +207,10 @@
             this.labelPlayerWhite.TabIndex = 0;
             this.labelPlayerWhite.Text = "label1";
             // 
-            // quitAGameToolStripMenuItem
-            // 
-            this.quitAGameToolStripMenuItem.Name = "quitAGameToolStripMenuItem";
-            this.quitAGameToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
-            this.quitAGameToolStripMenuItem.Text = "Quit a game";
-            this.quitAGameToolStripMenuItem.Click += new System.EventHandler(this.quitAGameToolStripMenuItem_Click);
-            // 
-            // cancelNewGameToolStripMenuItem
-            // 
-            this.cancelNewGameToolStripMenuItem.Name = "cancelNewGameToolStripMenuItem";
-            this.cancelNewGameToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
-            this.cancelNewGameToolStripMenuItem.Text = "Cancel new game";
-            this.cancelNewGameToolStripMenuItem.Click += new System.EventHandler(this.cancelNewGameToolStripMenuItem_Click);
-            // 
             // frmMain
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.ClientSize = new System.Drawing.Size(476, 586);
+            this.ClientSize = new System.Drawing.Size(476, 613);
             this.Controls.Add(this.panel3);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panelBoard);

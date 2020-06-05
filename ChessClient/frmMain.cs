@@ -69,6 +69,22 @@ namespace OldChess
             for (int i = 0; i < 8; i++)
                 for (int j = 0; j < 8; j++)
                     GameMap[i, j] = AddCell(i, j);
+            for (int i = 0; i < 8; i++)
+                AddLabel(15, 50 * i + 145, (8 - i).ToString());
+            for (int i = 0; i < 8; i++)
+                AddLabel(50 * i + 55, 535, ((char)('a' + i)).ToString());
+        }
+
+        private void AddLabel(int x, int y, string text)
+        {
+            var label = new Label();
+            label.Location = new Point(x, y); 
+            label.Name = "label" + text;
+            label.Text = text;
+            label.Size = new Size(20, 16);
+            label.Font = new Font("Arial", 10, FontStyle.Regular);
+            label.BringToFront();
+            this.Controls.Add(label);
         }
 
         Panel AddCell(int x, int y)
@@ -119,6 +135,7 @@ namespace OldChess
                     string move = figure +
                         ((char)('a' + xFrom)).ToString() + ((char)('1' + yFrom)).ToString() +
                         ((char)('a' + x)).ToString() + ((char)('1' + y)).ToString();
+                    move += chess.isPromotion(move);
                     if (!chess.Equals(chess.Move(move)))
                     {
                         chess = chess.Move(move);
@@ -469,19 +486,23 @@ namespace OldChess
                 }
                 else if (msg == "DRAW")
                 {
-                    JoinedGameID = -1;
-                    state = ClientState.connect;
                     if (MessageBox.Show("game has been ended with draw", "info", MessageBoxButtons.OK, MessageBoxIcon.Information) == DialogResult.OK)
+                    {
+                        JoinedGameID = -1;
+                        state = ClientState.connect;
                         menuStrip1.Invoke(new Action(() => RefreshServerControlTools()));
+                    }
                     return;
                 }
                 else if (msg == "WIN")
                 {
-                    JoinedGameID = -1;
-                    state = ClientState.connect;
-                    if (MessageBox.Show($"you have defeated {OpponentName}", "info", 
+                    if (MessageBox.Show($"you have defeated {OpponentName}", "info",
                         MessageBoxButtons.OK, MessageBoxIcon.Information) == DialogResult.OK)
+                    {
+                        JoinedGameID = -1;
+                        state = ClientState.connect;
                         menuStrip1.Invoke(new Action(() => RefreshServerControlTools()));
+                    }
                     return;
                 }
 
