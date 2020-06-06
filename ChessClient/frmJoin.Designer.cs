@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmJoin));
             this.lvGames = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -42,6 +43,7 @@
             this.columnHeader3});
             this.lvGames.FullRowSelect = true;
             this.lvGames.GridLines = true;
+            this.lvGames.HideSelection = false;
             this.lvGames.Location = new System.Drawing.Point(27, 27);
             this.lvGames.MultiSelect = false;
             this.lvGames.Name = "lvGames";
@@ -74,6 +76,7 @@
             this.ClientSize = new System.Drawing.Size(382, 375);
             this.Controls.Add(this.lvGames);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "frmJoin";
             this.Text = "Join";

@@ -30,6 +30,7 @@ namespace OldChess
 
         private readonly int CellSize = 50;
         private Panel[,] GameMap;
+        private bool isMoveOpen;
         private Chess.Chess chess;
         private bool wait;
         private int xFrom, yFrom;
@@ -38,6 +39,9 @@ namespace OldChess
         {
             InitializeComponent();
             InitGameMap();
+            isMoveOpen = false;
+            RefreshFormSize();
+            labelFEN.Text = "";
             labelServer.Text = "";
             labelPlayerBlack.Text = "";
             labelPlayerWhite.Text = "";
@@ -51,13 +55,14 @@ namespace OldChess
             OpponentName = enemy;
             this.SessionID = SessionID;
             this.side = side;
+
             state = ClientState.play;
             labelServer.Invoke(new Action(() => RefreshServerControlTools()));
 
             wait = true;
             active = side == "white" ? true : false;
             chess = new Chess.Chess();
-            ShowPosition();
+            panelBoard.Invoke(new Action(() => ShowPosition()));
 
             Thread ServerThread = new Thread(new ThreadStart(ProcessServer));
             ServerThread.Start();
@@ -139,6 +144,7 @@ namespace OldChess
                     if (!chess.Equals(chess.Move(move)))
                     {
                         chess = chess.Move(move);
+                        UpdateMoveTable(move);
                         if (chess.isCheckmate())
                             SendMessage($"MOVEWIN {UserName} {move}");
                         else if (chess.isStalemate())
@@ -202,6 +208,13 @@ namespace OldChess
                     else
                         GameMap[i, j].BackgroundImage = null;
                 }
+            }
+            if (state == ClientState.play)
+                labelFEN.Text = "FEN: " + chess.fen;
+            else
+            {
+                labelFEN.Text = "";
+                lvMoves.Items.Clear();
             }
             MarkSquares();
             RefreshLabelsColor();
@@ -294,6 +307,22 @@ namespace OldChess
                         labelPlayerWhite.Text = OpponentName;
                     }
                     break;
+            }
+        }
+
+        private void UpdateMoveTable(string move)
+        {
+            if (move[0] >= 'A' && move[0] <= 'Z')
+            {
+                var item = new ListViewItem();
+                item.Text = (lvMoves.Items.Count + 1).ToString();
+                item.SubItems.Add(move);
+                lvMoves.Items.Add(item);
+            }
+            else if (move[0] >= 'a' && move[0] <= 'z')
+            {
+                int index = lvMoves.Items.Count;
+                lvMoves.Items[index - 1].SubItems.Add(move);
             }
         }
 
@@ -512,7 +541,8 @@ namespace OldChess
                     string move = msg.Split(' ')[2];
                     chess = chess.Move(move);
                     active = true;
-                    ShowPosition();
+                    lvMoves.Invoke(new Action(() => UpdateMoveTable(move)));
+                    panelBoard.Invoke(new Action(() => ShowPosition()));
                 }
                 if (request == "DEFEATED")
                 {
@@ -549,6 +579,33 @@ namespace OldChess
         private void cancelNewGameToolStripMenuItem_Click(object sender, EventArgs e)
         {
             SendMessage($"CANCELNEW {UserName}");
+        }
+
+        private void RefreshFormSize()
+        {
+            if (!isMoveOpen)
+            {
+                this.Height = 660;
+                this.Width = 494;
+                panel4.Visible = false;
+                lvMoves.Visible = false;
+                isMoveOpen = false;
+            }
+            else
+            {
+                this.Height = 715;
+                this.Width = 695;
+                panel4.Visible = true;
+                lvMoves.Visible = true;
+                isMoveOpen = true;
+            }
+        }
+
+        private void movesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (isMoveOpen) isMoveOpen = false;
+            else isMoveOpen = true;
+            RefreshFormSize();
         }
 
         private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
