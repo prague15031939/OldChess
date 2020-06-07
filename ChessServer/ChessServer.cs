@@ -45,7 +45,7 @@ namespace ChessServer
             }
             else
                 foreach (User user in UserList)
-                    Console.WriteLine($":: {user.name}" + (user.SessionID == -1 ? "" : $" on session #{user.SessionID} as {user.side}"));
+                    Console.WriteLine($":: {user.client.Client.RemoteEndPoint} {user.name}" + (user.SessionID == -1 ? "" : $" on session #{user.SessionID} as {user.side}"));
         }
 
         public void PrintSessions()
